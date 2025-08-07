@@ -25,6 +25,7 @@ import { WebFetchTool } from '../tools/web-fetch.js';
 import { ReadManyFilesTool } from '../tools/read-many-files.js';
 import { MemoryTool, setGeminiMdFilename } from '../tools/memoryTool.js';
 import { WebSearchTool } from '../tools/web-search.js';
+import { getPlanningTool } from '../tools/planning-tool.js';
 import { GeminiClient } from '../core/client.js';
 import { FileDiscoveryService } from '../services/fileDiscoveryService.js';
 import { GitService } from '../services/gitService.js';
@@ -841,6 +842,9 @@ export class Config {
     registerCoreTool(ShellTool, this);
     registerCoreTool(MemoryTool);
     registerCoreTool(WebSearchTool, this);
+
+    // Manually register the planning tool as it has a different structure
+    registry.registerTool(getPlanningTool(this));
 
     await registry.discoverAllTools();
     return registry;
