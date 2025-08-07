@@ -172,6 +172,7 @@ describe('subagent.ts', () => {
 
       it('should throw an error if a tool requires confirmation', async () => {
         const mockTool = {
+          name: 'risky_tool',
           schema: { parameters: { type: Type.OBJECT, properties: {} } },
           build: vi.fn().mockReturnValue({
             shouldConfirmExecute: vi.fn().mockResolvedValue({
@@ -206,6 +207,7 @@ describe('subagent.ts', () => {
 
       it('should succeed if tools do not require confirmation', async () => {
         const mockTool = {
+          name: 'safe_tool',
           schema: { parameters: { type: Type.OBJECT, properties: {} } },
           build: vi.fn().mockReturnValue({
             shouldConfirmExecute: vi.fn().mockResolvedValue(null),
@@ -236,6 +238,7 @@ describe('subagent.ts', () => {
           .mockImplementation(() => {});
 
         const mockToolWithParams = {
+          name: 'tool_with_params',
           schema: {
             parameters: {
               type: Type.OBJECT,
@@ -251,6 +254,7 @@ describe('subagent.ts', () => {
 
         const { config } = await createMockConfig({
           getTool: vi.fn().mockReturnValue(mockToolWithParams),
+          getAllTools: vi.fn().mockReturnValue([mockToolWithParams]),
         });
 
         const toolConfig: ToolConfig = { tools: ['tool_with_params'] };
@@ -540,6 +544,7 @@ describe('subagent.ts', () => {
           getFunctionDeclarationsFiltered: vi
             .fn()
             .mockReturnValue([listFilesToolDef]),
+          getTool: vi.fn().mockReturnValue(undefined),
         });
         const toolConfig: ToolConfig = { tools: ['list_files'] };
 
