@@ -318,7 +318,8 @@ export class SubAgentScope {
       }
 
       for (const tool of subagentToolRegistry.getAllTools()) {
-        const requiredParams = tool.schema.parameters?.required ?? [];
+        const schema = tool.schema.parametersJsonSchema as any;
+        const requiredParams = schema?.required ?? [];
         if (requiredParams.length > 0) {
           // This check is imperfect. A tool might require parameters but still
           // be interactive (e.g., `delete_file(path)`). However, we cannot

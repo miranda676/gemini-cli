@@ -173,7 +173,7 @@ describe('subagent.ts', () => {
       it('should throw an error if a tool requires confirmation', async () => {
         const mockTool = {
           name: 'risky_tool',
-          schema: { parameters: { type: Type.OBJECT, properties: {} } },
+          schema: { parametersJsonSchema: { type: 'object', properties: {} } },
           build: vi.fn().mockReturnValue({
             shouldConfirmExecute: vi.fn().mockResolvedValue({
               type: 'exec',
@@ -208,7 +208,7 @@ describe('subagent.ts', () => {
       it('should succeed if tools do not require confirmation', async () => {
         const mockTool = {
           name: 'safe_tool',
-          schema: { parameters: { type: Type.OBJECT, properties: {} } },
+          schema: { parametersJsonSchema: { type: 'object', properties: {} } },
           build: vi.fn().mockReturnValue({
             shouldConfirmExecute: vi.fn().mockResolvedValue(null),
           }),
@@ -240,10 +240,10 @@ describe('subagent.ts', () => {
         const mockToolWithParams = {
           name: 'tool_with_params',
           schema: {
-            parameters: {
-              type: Type.OBJECT,
+            parametersJsonSchema: {
+              type: 'object',
               properties: {
-                path: { type: Type.STRING },
+                path: { type: 'string' },
               },
               required: ['path'],
             },
