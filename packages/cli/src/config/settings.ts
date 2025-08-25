@@ -12,14 +12,20 @@ import {
   GEMINI_CONFIG_DIR as GEMINI_DIR,
   getErrorMessage,
   Storage,
+  MCPServerConfig,
+  BugCommandSettings,
+  TelemetrySettings,
+  AuthType,
+  ChatCompressionSettings,
 } from '@google/gemini-cli-core';
 import stripJsonComments from 'strip-json-comments';
 import { DefaultLight } from '../ui/themes/default-light.js';
 import { DefaultDark } from '../ui/themes/default.js';
 import { isWorkspaceTrusted } from './trustedFolders.js';
-import { Settings, MemoryImportFormat } from './settingsSchema.js';
+import { MemoryImportFormat, DnsResolutionOrder } from './settingsSchema.js';
+import { CustomTheme } from '../ui/themes/theme.js';
 
-export type { Settings, MemoryImportFormat };
+export type { MemoryImportFormat };
 
 export const SETTINGS_DIRECTORY_NAME = '.gemini';
 
@@ -73,6 +79,8 @@ export interface AccessibilitySettings {
 }
 
 export interface Settings {
+  // Allow additional properties for compatibility
+  [key: string]: unknown;
   theme?: string;
   customThemes?: Record<string, CustomTheme>;
   selectedAuthType?: AuthType;
@@ -147,6 +155,16 @@ export interface Settings {
   chatCompression?: ChatCompressionSettings;
 
   usePlanningTool?: boolean;
+
+  // New settings from main branch
+  folderTrust?: boolean;
+  useRipgrep?: boolean;
+  shouldUseNodePtyShell?: boolean;
+  skipNextSpeakerCheck?: boolean;
+  enablePromptCompletion?: boolean;
+  debugKeystrokeLogging?: boolean;
+  hideFooter?: boolean;
+  showLineNumbers?: boolean;
 }
 
 export interface SettingsError {

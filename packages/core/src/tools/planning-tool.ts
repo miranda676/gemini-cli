@@ -4,8 +4,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { BaseTool, Icon, ToolResult } from './tools.js';
-import { Schema, Type } from '@google/genai';
+import {
+  BaseDeclarativeTool,
+  Kind,
+  ToolResult,
+  ToolInvocation,
+  AnyDeclarativeTool,
+} from './tools.js';
 import { Config } from '../config/config.js';
 import {
   ContextState,
@@ -181,28 +186,47 @@ const outputConfig: OutputConfig = {
   },
 };
 
-const PlanningToolSchema: Schema = {
-  type: Type.OBJECT,
+const PlanningToolSchema = {
+  type: 'object',
   properties: {
     user_request: {
-      type: Type.STRING,
+      type: 'string',
       description: 'The high-level user request to be planned.',
     },
   },
   required: ['user_request'],
 };
 
-class PlanningTool extends BaseTool<{ user_request: string }> {
+class PlanningTool extends BaseDeclarativeTool<
+  { user_request: string },
+  ToolResult
+> {
   constructor(private readonly runtimeContext: Config) {
     super(
       planningToolName,
       'Planning Tool',
       'For complex, multi-step tasks, use this tool to generate a detailed, step-by-step execution plan. This tool is ideal for creating plans that involve file modifications or other actions requiring a precise sequence of operations. The output is a structured JSON plan that another agent will execute, ensuring all steps are performed correctly and in the right order.',
-      Icon.LightBulb,
+      Kind.Think,
       PlanningToolSchema,
       true, // isOutputMarkdown
       true, // canUpdateOutput
     );
+  }
+
+  protected createInvocation(params: {
+    user_request: string;
+  }): ToolInvocation<{ user_request: string }, ToolResult> {
+    return {
+      params,
+      getDescription: () =>
+        `Generate a detailed execution plan for: ${params.user_request}`,
+      toolLocations: () => [],
+      shouldConfirmExecute: async () => false,
+      execute: async (
+        signal: AbortSignal,
+        updateOutput?: (output: string) => void,
+      ) => this.execute(params, signal, updateOutput),
+    };
   }
 
   async execute(
@@ -303,8 +327,6 @@ class PlanningTool extends BaseTool<{ user_request: string }> {
   }
 }
 
-export function getPlanningTool(
-  runtimeContext: Config,
-): BaseTool<{ user_request: string }> {
+export function getPlanningTool(runtimeContext: Config): AnyDeclarativeTool {
   return new PlanningTool(runtimeContext);
 }

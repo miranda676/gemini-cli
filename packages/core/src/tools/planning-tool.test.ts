@@ -8,7 +8,7 @@ import { vi, describe, it, expect, beforeEach, Mocked } from 'vitest';
 import { getPlanningTool } from './planning-tool.js';
 import { SubAgentScope, SubagentTerminateMode } from '../core/subagent.js';
 import { Config } from '../config/config.js';
-import { BaseTool } from './tools.js';
+import { AnyDeclarativeTool } from './tools.js';
 
 // Mock the SubAgentScope
 vi.mock('../core/subagent.js', async (importOriginal) => {
@@ -24,7 +24,7 @@ vi.mock('../core/subagent.js', async (importOriginal) => {
 const mockedSubAgentScope = SubAgentScope as Mocked<typeof SubAgentScope>;
 
 describe('PlanningTool', () => {
-  let planningTool: BaseTool<{ user_request: string }>;
+  let planningTool: AnyDeclarativeTool;
   let mockConfig: Config;
 
   beforeEach(() => {
@@ -52,10 +52,8 @@ describe('PlanningTool', () => {
     );
 
     const params = { user_request: 'Test request' };
-    const result = await planningTool.execute(
-      params,
-      new AbortController().signal,
-    );
+    const invocation = planningTool.build(params);
+    const result = await invocation.execute(new AbortController().signal);
 
     expect(SubAgentScope.create).toHaveBeenCalled();
     expect(mockPlannerAgent.runNonInteractive).toHaveBeenCalled();
@@ -86,10 +84,8 @@ describe('PlanningTool', () => {
     );
 
     const params = { user_request: 'Test request' };
-    const result = await planningTool.execute(
-      params,
-      new AbortController().signal,
-    );
+    const invocation = planningTool.build(params);
+    const result = await invocation.execute(new AbortController().signal);
 
     expect(result.returnDisplay).toBe('Failed to create a plan.');
     expect(result.llmContent).toEqual([
@@ -120,10 +116,8 @@ describe('PlanningTool', () => {
     );
 
     const params = { user_request: 'Test request' };
-    const result = await planningTool.execute(
-      params,
-      new AbortController().signal,
-    );
+    const invocation = planningTool.build(params);
+    const result = await invocation.execute(new AbortController().signal);
 
     expect(result.returnDisplay).toBe('not a valid json');
     expect(result.llmContent).toEqual([
