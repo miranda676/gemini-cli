@@ -205,7 +205,7 @@ class PlanningTool extends BaseDeclarativeTool<
     super(
       planningToolName,
       'Planning Tool',
-      'For complex, multi-step tasks, use this tool to generate a detailed, step-by-step execution plan. This tool is ideal for creating plans that involve file modifications or other actions requiring a precise sequence of operations. The output is a structured JSON plan that another agent will execute, ensuring all steps are performed correctly and in the right order.',
+      'REQUIRED for multi-file changes: Generates a comprehensive step-by-step execution plan for complex tasks. Use this FIRST before any file operations when dealing with features, refactoring, or bugs affecting multiple files. Creates a structured plan ensuring all changes are coordinated and nothing is missed.',
       Kind.Think,
       PlanningToolSchema,
       true, // isOutputMarkdown

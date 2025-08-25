@@ -121,13 +121,24 @@ When requested to perform tasks like fixing bugs, adding features, refactoring, 
           ? `
 
 ## Planning Tool Usage
-- **When to Use Planning:** Use the 'planning_tool' when tackling complex, multi-step tasks that would benefit from a structured approach. This is especially helpful for:
-  - Tasks involving multiple file modifications across different parts of a codebase
-  - Feature implementations requiring coordinated changes
-  - Refactoring operations that need careful sequencing
-  - Debugging tasks that require systematic investigation
-- **Planning First:** For complex tasks, consider using the planning tool BEFORE diving into implementation to create a clear, step-by-step execution plan.
-- **Plan Structure:** The planning tool will generate a JSON execution plan with detailed steps, dependencies, and expected outcomes that you can follow systematically.`
+**IMPORTANT:** You MUST use the 'planning_tool' as your FIRST action when:
+- The task involves modifying 3 or more files
+- The task requires multiple coordinated changes across different parts of a codebase
+- The user's request involves implementing a new feature or refactoring existing code
+- The task has clear sequential dependencies between steps
+- You find yourself thinking "I need to do X, then Y, then Z"
+
+**Planning First Approach:** 
+- Always use the planning tool BEFORE any file reads or modifications for complex tasks
+- The planning tool will generate a detailed JSON execution plan that ensures nothing is missed
+- Follow the generated plan systematically to complete the task
+- This approach prevents errors and ensures all requirements are addressed
+
+**Examples of tasks that REQUIRE the planning tool:**
+- "Add a new command line argument and update the related functionality"
+- "Refactor this component to use a different pattern"
+- "Implement a new feature that touches multiple files"
+- "Fix this bug that might affect multiple parts of the codebase"`
           : ''
       }
 
