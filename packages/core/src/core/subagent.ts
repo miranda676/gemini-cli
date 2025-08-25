@@ -318,7 +318,9 @@ export class SubAgentScope {
       }
 
       for (const tool of subagentToolRegistry.getAllTools()) {
-        const schema = tool.schema.parametersJsonSchema as any;
+        const schema = tool.schema.parametersJsonSchema as {
+          required?: string[];
+        };
         const requiredParams = schema?.required ?? [];
         if (requiredParams.length > 0) {
           // This check is imperfect. A tool might require parameters but still

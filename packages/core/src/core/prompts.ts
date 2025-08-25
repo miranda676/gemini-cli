@@ -19,7 +19,10 @@ import process from 'node:process';
 import { isGitRepository } from '../utils/gitUtils.js';
 import { MemoryTool, GEMINI_CONFIG_DIR } from '../tools/memoryTool.js';
 
-export function getCoreSystemPrompt(userMemory?: string, usePlanningTool?: boolean): string {
+export function getCoreSystemPrompt(
+  userMemory?: string,
+  usePlanningTool?: boolean,
+): string {
   // if GEMINI_SYSTEM_MD is set (and not 0|false), override system prompt from file
   // default path is .gemini/system.md but can be modified via custom path in GEMINI_SYSTEM_MD
   let systemMdEnabled = false;
@@ -113,7 +116,9 @@ When requested to perform tasks like fixing bugs, adding features, refactoring, 
 - **Background Processes:** Use background processes (via \`&\`) for commands that are unlikely to stop on their own, e.g. \`node server.js &\`. If unsure, ask the user.
 - **Interactive Commands:** Try to avoid shell commands that are likely to require user interaction (e.g. \`git rebase -i\`). Use non-interactive versions of commands (e.g. \`npm init -y\` instead of \`npm init\`) when available, and otherwise remind the user that interactive shell commands are not supported and may cause hangs until canceled by the user.
 - **Remembering Facts:** Use the '${MemoryTool.Name}' tool to remember specific, *user-related* facts or preferences when the user explicitly asks, or when they state a clear, concise piece of information that would help personalize or streamline *your future interactions with them* (e.g., preferred coding style, common project paths they use, personal tool aliases). This tool is for user-specific information that should persist across sessions. Do *not* use it for general project context or information. If unsure whether to save something, you can ask the user, "Should I remember that for you?"
-- **Respect User Confirmations:** Most tool calls (also denoted as 'function calls') will first require confirmation from the user, where they will either approve or cancel the function call. If a user cancels a function call, respect their choice and do _not_ try to make the function call again. It is okay to request the tool call again _only_ if the user requests that same tool call on a subsequent prompt. When a user cancels a function call, assume best intentions from the user and consider inquiring if they prefer any alternative paths forward.${usePlanningTool ? `
+- **Respect User Confirmations:** Most tool calls (also denoted as 'function calls') will first require confirmation from the user, where they will either approve or cancel the function call. If a user cancels a function call, respect their choice and do _not_ try to make the function call again. It is okay to request the tool call again _only_ if the user requests that same tool call on a subsequent prompt. When a user cancels a function call, assume best intentions from the user and consider inquiring if they prefer any alternative paths forward.${
+        usePlanningTool
+          ? `
 
 ## Planning Tool Usage
 - **When to Use Planning:** Use the 'planning_tool' when tackling complex, multi-step tasks that would benefit from a structured approach. This is especially helpful for:
@@ -122,7 +127,9 @@ When requested to perform tasks like fixing bugs, adding features, refactoring, 
   - Refactoring operations that need careful sequencing
   - Debugging tasks that require systematic investigation
 - **Planning First:** For complex tasks, consider using the planning tool BEFORE diving into implementation to create a clear, step-by-step execution plan.
-- **Plan Structure:** The planning tool will generate a JSON execution plan with detailed steps, dependencies, and expected outcomes that you can follow systematically.` : ''}
+- **Plan Structure:** The planning tool will generate a JSON execution plan with detailed steps, dependencies, and expected outcomes that you can follow systematically.`
+          : ''
+      }
 
 ## Interaction Details
 - **Help Command:** The user can use '/help' to display help information.
