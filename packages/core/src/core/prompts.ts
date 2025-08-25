@@ -121,12 +121,19 @@ When requested to perform tasks like fixing bugs, adding features, refactoring, 
           ? `
 
 ## Planning Tool Usage
-**IMPORTANT:** You MUST use the 'planning_tool' as your FIRST action when:
-- The task involves modifying 3 or more files
-- The task requires multiple coordinated changes across different parts of a codebase
-- The user's request involves implementing a new feature or refactoring existing code
-- The task has clear sequential dependencies between steps
-- You find yourself thinking "I need to do X, then Y, then Z"
+**🚨 MANDATORY FIRST STEP:** Before ANY file reads or edits, you MUST use 'planning_tool' when the user asks you to:
+- Add, modify, or deprecate command-line arguments/flags
+- Implement a new feature (even small ones)
+- Refactor existing functionality
+- Fix bugs that might touch multiple files
+- Make changes that affect both code and tests
+
+**Specific triggers that REQUIRE planning_tool:**
+- "deprecate the --X flag" → Use planning_tool FIRST
+- "add a new positional argument" → Use planning_tool FIRST  
+- "refactor X to Y" → Use planning_tool FIRST
+- "implement X feature" → Use planning_tool FIRST
+- Any request mentioning multiple files or components → Use planning_tool FIRST
 
 **Planning First Approach:** 
 - Always use the planning tool BEFORE any file reads or modifications for complex tasks

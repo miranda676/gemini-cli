@@ -204,8 +204,8 @@ class PlanningTool extends BaseDeclarativeTool<
   constructor(private readonly runtimeContext: Config) {
     super(
       planningToolName,
-      'Planning Tool',
-      'REQUIRED for multi-file changes: Generates a comprehensive step-by-step execution plan for complex tasks. Use this FIRST before any file operations when dealing with features, refactoring, or bugs affecting multiple files. Creates a structured plan ensuring all changes are coordinated and nothing is missed.',
+      'Planning Tool - Use First for Complex Tasks',
+      'Use this tool FIRST when the user requests: adding/removing features, refactoring code, fixing bugs across files, or any task mentioning multiple components. Generates a detailed JSON execution plan that breaks down the task into clear steps with dependencies. Essential for ensuring nothing is missed and all changes are properly coordinated.',
       Kind.Think,
       PlanningToolSchema,
       true, // isOutputMarkdown

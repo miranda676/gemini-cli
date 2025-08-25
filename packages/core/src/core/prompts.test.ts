@@ -290,9 +290,9 @@ describe('Core System Prompt (prompts.ts)', () => {
       const prompt = getCoreSystemPrompt(undefined, true);
       expect(prompt).toContain('## Planning Tool Usage');
       expect(prompt).toContain('planning_tool');
-      expect(prompt).toContain('When to Use Planning');
-      expect(prompt).toContain('Planning First');
-      expect(prompt).toContain('Plan Structure');
+      expect(prompt).toContain('MANDATORY FIRST STEP');
+      expect(prompt).toContain('Planning First Approach');
+      expect(prompt).toContain('Specific triggers that REQUIRE');
     });
 
     it('should include planning tool section with user memory when both are provided', () => {
