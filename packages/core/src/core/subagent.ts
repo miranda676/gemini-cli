@@ -383,7 +383,11 @@ export class SubAgentScope {
         for (const tool of this.toolConfig.tools) {
           if (typeof tool === 'string') {
             toolsToLoad.push(tool);
+          } else if (typeof tool === 'object' && 'schema' in tool) {
+            // This is a tool instance with a schema property
+            toolsList.push(tool.schema);
           } else {
+            // This is a raw FunctionDeclaration
             toolsList.push(tool);
           }
         }
