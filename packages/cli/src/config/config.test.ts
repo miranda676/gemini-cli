@@ -4,15 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
-  describe,
-  it,
-  expect,
-  vi,
-  beforeEach,
-  afterEach,
-  type Mock,
-} from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as os from 'node:os';
 import * as path from 'node:path';
 import { ShellTool, EditTool, WriteFileTool } from '@google/gemini-cli-core';
@@ -24,6 +16,7 @@ import { isWorkspaceTrusted } from './trustedFolders.js';
 
 vi.mock('./trustedFolders.js', () => ({
   isWorkspaceTrusted: vi.fn().mockReturnValue(true), // Default to trusted
+  getWorkspaceTrustFromLocalConfig: vi.fn().mockReturnValue(true),
 }));
 
 vi.mock('fs', async (importOriginal) => {
@@ -1894,125 +1887,4 @@ describe('loadCliConfig approval mode', () => {
       expect(config.getApprovalMode()).toBe(ServerConfig.ApprovalMode.DEFAULT);
     });
   });
-});
-
-describe('loadCliConfig trustedFolder', () => {
-  const originalArgv = process.argv;
-
-  beforeEach(() => {
-    vi.resetAllMocks();
-    vi.mocked(os.homedir).mockReturnValue('/mock/home/user');
-    vi.stubEnv('GEMINI_API_KEY', 'test-api-key');
-    process.argv = ['node', 'script.js']; // Reset argv for each test
-  });
-
-  afterEach(() => {
-    process.argv = originalArgv;
-    vi.unstubAllEnvs();
-    vi.restoreAllMocks();
-  });
-
-  const testCases = [
-    // Cases where folderTrustFeature is false (feature disabled)
-    {
-      folderTrustFeature: false,
-      folderTrust: true,
-      isWorkspaceTrusted: true,
-      expectedFolderTrust: false,
-      expectedIsTrustedFolder: true,
-      description:
-        'feature disabled, folderTrust true, workspace trusted -> behave as trusted',
-    },
-    {
-      folderTrustFeature: false,
-      folderTrust: true,
-      isWorkspaceTrusted: false,
-      expectedFolderTrust: false,
-      expectedIsTrustedFolder: true,
-      description:
-        'feature disabled, folderTrust true, workspace not trusted -> behave as trusted',
-    },
-    {
-      folderTrustFeature: false,
-      folderTrust: false,
-      isWorkspaceTrusted: true,
-      expectedFolderTrust: false,
-      expectedIsTrustedFolder: true,
-      description:
-        'feature disabled, folderTrust false, workspace trusted -> behave as trusted',
-    },
-
-    // Cases where folderTrustFeature is true but folderTrust setting is false
-    {
-      folderTrustFeature: true,
-      folderTrust: false,
-      isWorkspaceTrusted: true,
-      expectedFolderTrust: false,
-      expectedIsTrustedFolder: true,
-      description:
-        'feature on, folderTrust false, workspace trusted -> behave as trusted',
-    },
-    {
-      folderTrustFeature: true,
-      folderTrust: false,
-      isWorkspaceTrusted: false,
-      expectedFolderTrust: false,
-      expectedIsTrustedFolder: true,
-      description:
-        'feature on, folderTrust false, workspace not trusted -> behave as trusted',
-    },
-
-    // Cases where feature is fully enabled (folderTrustFeature and folderTrust are true)
-    {
-      folderTrustFeature: true,
-      folderTrust: true,
-      isWorkspaceTrusted: true,
-      expectedFolderTrust: true,
-      expectedIsTrustedFolder: true,
-      description:
-        'feature on, folderTrust on, workspace trusted -> is trusted',
-    },
-    {
-      folderTrustFeature: true,
-      folderTrust: true,
-      isWorkspaceTrusted: false,
-      expectedFolderTrust: true,
-      expectedIsTrustedFolder: false,
-      description:
-        'feature on, folderTrust on, workspace NOT trusted -> is NOT trusted',
-    },
-    {
-      folderTrustFeature: true,
-      folderTrust: true,
-      isWorkspaceTrusted: undefined,
-      expectedFolderTrust: true,
-      expectedIsTrustedFolder: undefined,
-      description:
-        'feature on, folderTrust on, workspace trust unknown -> is unknown',
-    },
-  ];
-
-  for (const {
-    folderTrustFeature,
-    folderTrust,
-    isWorkspaceTrusted: mockTrustValue,
-    expectedFolderTrust,
-    expectedIsTrustedFolder,
-    description,
-  } of testCases) {
-    it(`should be correct for: ${description}`, async () => {
-      (isWorkspaceTrusted as Mock).mockImplementation((settings: Settings) => {
-        const featureIsEnabled =
-          (settings.folderTrustFeature ?? false) &&
-          (settings.folderTrust ?? true);
-        return featureIsEnabled ? mockTrustValue : true;
-      });
-      const argv = await parseArguments({} as Settings);
-      const settings: Settings = { folderTrustFeature, folderTrust };
-      const config = await loadCliConfig(settings, [], 'test-session', argv);
-
-      expect(config.getFolderTrust()).toBe(expectedFolderTrust);
-      expect(config.isTrustedFolder()).toBe(expectedIsTrustedFolder);
-    });
-  }
 });

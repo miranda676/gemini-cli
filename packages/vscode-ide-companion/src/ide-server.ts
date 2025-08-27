@@ -22,6 +22,7 @@ import { OpenFilesManager } from './open-files-manager.js';
 const MCP_SESSION_ID_HEADER = 'mcp-session-id';
 const IDE_SERVER_PORT_ENV_VAR = 'GEMINI_CLI_IDE_SERVER_PORT';
 const IDE_WORKSPACE_PATH_ENV_VAR = 'GEMINI_CLI_IDE_WORKSPACE_PATH';
+const IDE_WORKSPACE_TRUST_ENV_VAR = 'GEMINI_CLI_IDE_WORKSPACE_TRUST';
 
 function writePortAndWorkspace(
   context: vscode.ExtensionContext,
@@ -34,6 +35,7 @@ function writePortAndWorkspace(
     workspaceFolders && workspaceFolders.length > 0
       ? workspaceFolders.map((folder) => folder.uri.fsPath).join(path.delimiter)
       : '';
+  const workspaceTrust = vscode.workspace.isTrusted;
 
   context.environmentVariableCollection.replace(
     IDE_SERVER_PORT_ENV_VAR,
@@ -42,6 +44,10 @@ function writePortAndWorkspace(
   context.environmentVariableCollection.replace(
     IDE_WORKSPACE_PATH_ENV_VAR,
     workspacePath,
+  );
+  context.environmentVariableCollection.replace(
+    IDE_WORKSPACE_TRUST_ENV_VAR,
+    workspaceTrust.toString(),
   );
 
   log(`Writing port file to: ${portFile}`);
@@ -246,7 +252,7 @@ export class IDEServer {
     });
   }
 
-  async updateWorkspacePath(): Promise<void> {
+  async syncEnvVars(): Promise<void> {
     if (this.context && this.port) {
       await writePortAndWorkspace(
         this.context,

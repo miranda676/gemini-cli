@@ -54,6 +54,7 @@ import type { AnyToolInvocation } from '../tools/tools.js';
 import { WorkspaceContext } from '../utils/workspaceContext.js';
 import { Storage } from './storage.js';
 import { FileExclusions } from '../utils/ignorePatterns.js';
+import { getIdeWorkspaceTrustOverride } from '../utils/trust.js';
 
 export enum ApprovalMode {
   DEFAULT = 'default',
@@ -201,7 +202,7 @@ export interface ConfigParameters {
   loadMemoryFromIncludeDirectories?: boolean;
   chatCompression?: ChatCompressionSettings;
   interactive?: boolean;
-  trustedFolder?: boolean;
+  localConfigTrustState?: boolean;
   useRipgrep?: boolean;
   shouldUseNodePtyShell?: boolean;
   skipNextSpeakerCheck?: boolean;
@@ -273,7 +274,7 @@ export class Config {
   private readonly loadMemoryFromIncludeDirectories: boolean = false;
   private readonly chatCompression: ChatCompressionSettings | undefined;
   private readonly interactive: boolean;
-  private readonly trustedFolder: boolean | undefined;
+  private readonly localConfigTrustState: boolean | undefined;
   private readonly useRipgrep: boolean;
   private readonly shouldUseNodePtyShell: boolean;
   private readonly skipNextSpeakerCheck: boolean;
@@ -348,7 +349,7 @@ export class Config {
       params.loadMemoryFromIncludeDirectories ?? false;
     this.chatCompression = params.chatCompression;
     this.interactive = params.interactive ?? false;
-    this.trustedFolder = params.trustedFolder;
+    this.localConfigTrustState = params.localConfigTrustState;
     this.useRipgrep = params.useRipgrep ?? false;
     this.shouldUseNodePtyShell = params.shouldUseNodePtyShell ?? false;
     this.skipNextSpeakerCheck = params.skipNextSpeakerCheck ?? false;
@@ -731,7 +732,12 @@ export class Config {
   }
 
   isTrustedFolder(): boolean | undefined {
-    return this.trustedFolder;
+    if (!this.getFolderTrust()) return true;
+
+    const trustOverride = getIdeWorkspaceTrustOverride();
+    if (trustOverride !== undefined) return trustOverride;
+
+    return this.localConfigTrustState;
   }
 
   setIdeMode(value: boolean): void {

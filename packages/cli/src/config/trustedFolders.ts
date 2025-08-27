@@ -7,7 +7,11 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { homedir } from 'node:os';
-import { getErrorMessage, isWithinRoot } from '@google/gemini-cli-core';
+import {
+  getErrorMessage,
+  isWithinRoot,
+  getIdeWorkspaceTrustOverride,
+} from '@google/gemini-cli-core';
 import type { Settings } from './settings.js';
 import stripJsonComments from 'strip-json-comments';
 
@@ -110,15 +114,7 @@ export function saveTrustedFolders(
   }
 }
 
-export function isWorkspaceTrusted(settings: Settings): boolean | undefined {
-  const folderTrustFeature = settings.folderTrustFeature ?? false;
-  const folderTrustSetting = settings.folderTrust ?? true;
-  const folderTrustEnabled = folderTrustFeature && folderTrustSetting;
-
-  if (!folderTrustEnabled) {
-    return true;
-  }
-
+export function getWorkspaceTrustFromLocalConfig(): boolean | undefined {
   const { rules, errors } = loadTrustedFolders();
 
   if (errors.length > 0) {
@@ -164,4 +160,20 @@ export function isWorkspaceTrusted(settings: Settings): boolean | undefined {
   }
 
   return undefined;
+}
+
+export function isWorkspaceTrusted(settings: Settings): boolean | undefined {
+  const folderTrustFeature = settings.folderTrustFeature ?? false;
+  const folderTrustSetting = settings.folderTrust ?? true;
+  const folderTrustEnabled = folderTrustFeature && folderTrustSetting;
+
+  if (!folderTrustEnabled) {
+    return true;
+  }
+
+  const trustOverride = getIdeWorkspaceTrustOverride();
+  if (trustOverride !== undefined) {
+    return trustOverride;
+  }
+  return getWorkspaceTrustFromLocalConfig();
 }

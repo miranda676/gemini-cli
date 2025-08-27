@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { Mock } from 'vitest';
 import type { ConfigParameters, SandboxConfig } from './config.js';
 import { Config, ApprovalMode } from './config.js';
@@ -662,74 +662,109 @@ describe('Server Config (config.ts)', () => {
       expect(wasReadFileToolRegistered).toBe(false);
     });
   });
-});
 
-describe('setApprovalMode with folder trust', () => {
-  it('should throw an error when setting YOLO mode in an untrusted folder', () => {
-    const config = new Config({
-      sessionId: 'test',
-      targetDir: '.',
-      debugMode: false,
-      model: 'test-model',
-      cwd: '.',
-      trustedFolder: false, // Untrusted
+  describe('isTrustedFolder', () => {
+    afterEach(() => {
+      delete process.env['GEMINI_CLI_IDE_WORKSPACE_TRUST'];
     });
-    expect(() => config.setApprovalMode(ApprovalMode.YOLO)).toThrow(
-      'Cannot enable privileged approval modes in an untrusted folder.',
-    );
+
+    it('should return true if folderTrust is false', () => {
+      const config = new Config({
+        ...baseParams,
+        folderTrust: false,
+      });
+      expect(config.isTrustedFolder()).toBe(true);
+    });
+
+    it('should return true if GEMINI_CLI_IDE_WORKSPACE_TRUST is "true"', () => {
+      process.env['GEMINI_CLI_IDE_WORKSPACE_TRUST'] = 'true';
+      const config = new Config({
+        ...baseParams,
+        folderTrust: true,
+      });
+      expect(config.isTrustedFolder()).toBe(true);
+    });
+
+    it('should return false if GEMINI_CLI_IDE_WORKSPACE_TRUST is "false"', () => {
+      process.env['GEMINI_CLI_IDE_WORKSPACE_TRUST'] = 'false';
+      const config = new Config({
+        ...baseParams,
+        folderTrust: true,
+      });
+      expect(config.isTrustedFolder()).toBe(false);
+    });
+
+    it('should return localConfigTrustState if GEMINI_CLI_IDE_WORKSPACE_TRUST is not set', () => {
+      const config = new Config({
+        ...baseParams,
+        folderTrust: true,
+        localConfigTrustState: true,
+      });
+      expect(config.isTrustedFolder()).toBe(true);
+
+      const config2 = new Config({
+        ...baseParams,
+        folderTrust: true,
+        localConfigTrustState: false,
+      });
+      expect(config2.isTrustedFolder()).toBe(false);
+    });
+
+    it('should return undefined if GEMINI_CLI_IDE_WORKSPACE_TRUST is not set and localConfigTrustState is undefined', () => {
+      const config = new Config({
+        ...baseParams,
+        folderTrust: true,
+        localConfigTrustState: undefined,
+      });
+      expect(config.isTrustedFolder()).toBeUndefined();
+    });
   });
 
-  it('should throw an error when setting AUTO_EDIT mode in an untrusted folder', () => {
-    const config = new Config({
-      sessionId: 'test',
-      targetDir: '.',
-      debugMode: false,
-      model: 'test-model',
-      cwd: '.',
-      trustedFolder: false, // Untrusted
-    });
-    expect(() => config.setApprovalMode(ApprovalMode.AUTO_EDIT)).toThrow(
-      'Cannot enable privileged approval modes in an untrusted folder.',
-    );
-  });
+  describe('setApprovalMode with folder trust', () => {
+    let config: Config;
 
-  it('should NOT throw an error when setting DEFAULT mode in an untrusted folder', () => {
-    const config = new Config({
-      sessionId: 'test',
-      targetDir: '.',
-      debugMode: false,
-      model: 'test-model',
-      cwd: '.',
-      trustedFolder: false, // Untrusted
+    beforeEach(() => {
+      config = new Config({
+        ...baseParams,
+        folderTrust: true,
+      });
     });
-    expect(() => config.setApprovalMode(ApprovalMode.DEFAULT)).not.toThrow();
-  });
 
-  it('should NOT throw an error when setting any mode in a trusted folder', () => {
-    const config = new Config({
-      sessionId: 'test',
-      targetDir: '.',
-      debugMode: false,
-      model: 'test-model',
-      cwd: '.',
-      trustedFolder: true, // Trusted
+    it('should throw an error when setting YOLO mode in an untrusted folder', () => {
+      vi.spyOn(config, 'isTrustedFolder').mockReturnValue(false);
+      expect(() => config.setApprovalMode(ApprovalMode.YOLO)).toThrow(
+        'Cannot enable privileged approval modes in an untrusted folder.',
+      );
     });
-    expect(() => config.setApprovalMode(ApprovalMode.YOLO)).not.toThrow();
-    expect(() => config.setApprovalMode(ApprovalMode.AUTO_EDIT)).not.toThrow();
-    expect(() => config.setApprovalMode(ApprovalMode.DEFAULT)).not.toThrow();
-  });
 
-  it('should NOT throw an error when setting any mode if trustedFolder is undefined', () => {
-    const config = new Config({
-      sessionId: 'test',
-      targetDir: '.',
-      debugMode: false,
-      model: 'test-model',
-      cwd: '.',
-      trustedFolder: undefined, // Undefined
+    it('should throw an error when setting AUTO_EDIT mode in an untrusted folder', () => {
+      vi.spyOn(config, 'isTrustedFolder').mockReturnValue(false);
+      expect(() => config.setApprovalMode(ApprovalMode.AUTO_EDIT)).toThrow(
+        'Cannot enable privileged approval modes in an untrusted folder.',
+      );
     });
-    expect(() => config.setApprovalMode(ApprovalMode.YOLO)).not.toThrow();
-    expect(() => config.setApprovalMode(ApprovalMode.AUTO_EDIT)).not.toThrow();
-    expect(() => config.setApprovalMode(ApprovalMode.DEFAULT)).not.toThrow();
+
+    it('should NOT throw an error when setting DEFAULT mode in an untrusted folder', () => {
+      vi.spyOn(config, 'isTrustedFolder').mockReturnValue(false);
+      expect(() => config.setApprovalMode(ApprovalMode.DEFAULT)).not.toThrow();
+    });
+
+    it('should NOT throw an error when setting any mode in a trusted folder', () => {
+      vi.spyOn(config, 'isTrustedFolder').mockReturnValue(true);
+      expect(() => config.setApprovalMode(ApprovalMode.YOLO)).not.toThrow();
+      expect(() =>
+        config.setApprovalMode(ApprovalMode.AUTO_EDIT),
+      ).not.toThrow();
+      expect(() => config.setApprovalMode(ApprovalMode.DEFAULT)).not.toThrow();
+    });
+
+    it('should NOT throw an error when setting any mode if trustedFolder is undefined', () => {
+      vi.spyOn(config, 'isTrustedFolder').mockReturnValue(undefined);
+      expect(() => config.setApprovalMode(ApprovalMode.YOLO)).not.toThrow();
+      expect(() =>
+        config.setApprovalMode(ApprovalMode.AUTO_EDIT),
+      ).not.toThrow();
+      expect(() => config.setApprovalMode(ApprovalMode.DEFAULT)).not.toThrow();
+    });
   });
 });
