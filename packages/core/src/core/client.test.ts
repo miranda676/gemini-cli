@@ -4,7 +4,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  afterEach,
+  type Mocked,
+} from 'vitest';
 
 import type {
   Chat,
@@ -486,14 +494,14 @@ describe('Gemini Client (client.ts)', () => {
     });
 
     describe('when compression inflates the token count', () => {
-      function setup() {
-        const mockChatHistory: Content[] = [
+      function setup({
+        chatHistory = [
           { role: 'user', parts: [{ text: 'Long conversation' }] },
           { role: 'model', parts: [{ text: 'Long response' }] },
-        ];
-
+        ] as Content[],
+      } = {}) {
         const mockChat: Partial<GeminiChat> = {
-          getHistory: vi.fn().mockReturnValue(mockChatHistory),
+          getHistory: vi.fn().mockReturnValue(chatHistory),
           setHistory: vi.fn(),
           sendMessage: vi.fn().mockResolvedValue({ text: 'Summary' }),
         };
@@ -502,7 +510,7 @@ describe('Gemini Client (client.ts)', () => {
           .mockResolvedValueOnce({ totalTokens: 1000 })
           .mockResolvedValueOnce({ totalTokens: 5000 });
 
-        const mockGenerator: Partial<ContentGenerator> = {
+        const mockGenerator: Partial<Mocked<ContentGenerator>> = {
           countTokens: mockCountTokens,
         };
 
@@ -512,6 +520,21 @@ describe('Gemini Client (client.ts)', () => {
 
         return { client, mockChat, mockGenerator };
       }
+
+      it('allows compression to be forced/manual after a failure', async () => {
+        const { client, mockGenerator } = setup();
+        mockGenerator.countTokens?.mockResolvedValue({
+          totalTokens: 1000,
+        });
+        await client.tryCompressChat('prompt-id-4'); // Fails
+        const result = await client.tryCompressChat('prompt-id-4', true);
+
+        expect(result).toEqual({
+          compressionStatus: CompressionStatus.COMPRESSED,
+          newTokenCount: 1000,
+          originalTokenCount: 1000,
+        });
+      });
 
       it('yields the result even if the compression inflated the tokens', async () => {
         const { client } = setup();
@@ -530,6 +553,32 @@ describe('Gemini Client (client.ts)', () => {
         await client.tryCompressChat('prompt-id-4', true);
 
         expect(client['chat']).toBe(mockChat); // a new chat session was not created
+      });
+
+      it('restores the history back to the original', async () => {
+        vi.mocked(tokenLimit).mockReturnValue(1000);
+        mockCountTokens.mockResolvedValue({
+          totalTokens: 999,
+        });
+
+        const originalHistory: Content[] = [
+          { role: 'user', parts: [{ text: 'what is your wisdom?' }] },
+          { role: 'model', parts: [{ text: 'some wisdom' }] },
+          { role: 'user', parts: [{ text: 'ahh that is a good a wisdom' }] },
+        ];
+
+        const { client } = setup({
+          chatHistory: originalHistory,
+        });
+        const { compressionStatus } =
+          await client.tryCompressChat('prompt-id-4');
+
+        expect(compressionStatus).toBe(
+          CompressionStatus.COMPRESSION_FAILED_INFLATED_TOKEN_COUNT,
+        );
+        expect(client['chat']?.setHistory).toHaveBeenCalledWith(
+          originalHistory,
+        );
       });
 
       it('will not attempt to compress context after a failure', async () => {

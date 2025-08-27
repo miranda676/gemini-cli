@@ -106,8 +106,8 @@ const COMPRESSION_PRESERVE_THRESHOLD = 0.3;
 export class GeminiClient {
   private chat?: GeminiChat;
   private contentGenerator?: ContentGenerator;
-  private embeddingModel: string;
-  private generateContentConfig: GenerateContentConfig = {
+  private readonly embeddingModel: string;
+  private readonly generateContentConfig: GenerateContentConfig = {
     temperature: 0,
     topP: 1,
   };
@@ -124,7 +124,7 @@ export class GeminiClient {
    */
   private hasFailedCompressionAttempt = false;
 
-  constructor(private config: Config) {
+  constructor(private readonly config: Config) {
     if (config.getProxy()) {
       setGlobalDispatcher(new ProxyAgent(config.getProxy() as string));
     }
@@ -776,7 +776,10 @@ export class GeminiClient {
     const curatedHistory = this.getChat().getHistory(true);
 
     // Regardless of `force`, don't do anything if the history is empty.
-    if (curatedHistory.length === 0 || this.hasFailedCompressionAttempt) {
+    if (
+      curatedHistory.length === 0 ||
+      (this.hasFailedCompressionAttempt && !force)
+    ) {
       return {
         originalTokenCount: 0,
         newTokenCount: 0,
@@ -887,6 +890,7 @@ export class GeminiClient {
     );
 
     if (newTokenCount > originalTokenCount) {
+      this.getChat().setHistory(curatedHistory);
       this.hasFailedCompressionAttempt = !force && true;
       return {
         originalTokenCount,
